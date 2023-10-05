@@ -36,7 +36,6 @@ class AuthenticationActivity : AppCompatActivity() {
         }
 
         observeAuthenticationState()
-        // TODO: a bonus is to customize the sign in flow to look nice using :
         //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
     }
 
@@ -46,7 +45,7 @@ class AuthenticationActivity : AppCompatActivity() {
             AuthUI.IdpConfig.GoogleBuilder().build()
         )
         startActivityForResult(
-            AuthUI.getInstance().createSignInIntentBuilder().setAvailableProviders(providers)
+            AuthUI.getInstance().createSignInIntentBuilder().setLogo(R.drawable.map).setAvailableProviders(providers)
                 .build(),
             SIGN_IN_RESULT_CODE
         )
@@ -64,7 +63,7 @@ class AuthenticationActivity : AppCompatActivity() {
                 // Sign in failed. If response is null the user canceled the sign-in flow using
                 // the back button. Otherwise check response.getError().getErrorCode() and handle
                 // the error.
-                Log.i("SignIn", "Sign in unsuccessful ${response?.error?.errorCode}")
+                Log.i("SignIn", "Sign in unsuccessful ${response?.error?.message}")
             }
         }
     }
@@ -77,7 +76,7 @@ class AuthenticationActivity : AppCompatActivity() {
                 }
 
                 else -> {
-                    Toast.makeText(this, "Login first", Toast.LENGTH_SHORT).show()
+//                    Toast.makeText(this, "Login first", Toast.LENGTH_SHORT).show()
                 }
             }
         })

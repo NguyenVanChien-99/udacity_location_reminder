@@ -4,7 +4,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofencingRequest
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 
 /**
  * Base Fragment to observe on the common LiveData objects

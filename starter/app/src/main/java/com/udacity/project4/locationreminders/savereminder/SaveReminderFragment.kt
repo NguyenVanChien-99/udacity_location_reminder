@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.Geofence
@@ -46,7 +47,7 @@ class SaveReminderFragment : BaseFragment() {
         val intent = Intent(requireActivity(), GeofenceBroadcastReceiver::class.java)
         // Use FLAG_UPDATE_CURRENT so that you get the same pending intent back when calling
         // addGeofences() and removeGeofences().
-        PendingIntent.getBroadcast(requireActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        PendingIntent.getBroadcast(requireActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -55,6 +56,7 @@ class SaveReminderFragment : BaseFragment() {
         binding = DataBindingUtil.inflate(inflater, layoutId, container, false)
 
         setDisplayHomeAsUpEnabled(true)
+        checkNotificationPermission()
         binding.viewModel = _viewModel
         geofencingClient = LocationServices.getGeofencingClient(requireActivity())
         return binding.root
@@ -81,7 +83,7 @@ class SaveReminderFragment : BaseFragment() {
             //  1) add a geofencing request
             //  2) save the reminder to the local db
             itemSelected = ReminderDataItem(title, description, location, latitude, longitude)
-
+            checkPermissionsAndStartGeofencing()
         }
     }
 
@@ -89,10 +91,22 @@ class SaveReminderFragment : BaseFragment() {
         super.onDestroy()
         // Make sure to clear the view model after destroy, as it's a single view model.
         _viewModel.onClear()
-        removeGeofences()
+//        Log.i("onDestroy", "onDestroy: desssssss")
+//        removeGeofences()
     }
 
-    @TargetApi(29)
+//    @TargetApi(29)
+    private fun checkPermissionsAndStartGeofencing() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            Log.i("TAG", "checkPermissionsAndStartGeofencing: ok")
+            checkDeviceLocationSettingsAndStartGeofence()
+        } else {
+            Log.i("TAG", "checkPermissionsAndStartGeofencing: no its not")
+            requestForegroundAndBackgroundLocationPermissions()
+        }
+    }
+
+//    @TargetApi(29)
     private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
         val foregroundLocationApproved = (
                 PackageManager.PERMISSION_GRANTED ==
@@ -112,10 +126,11 @@ class SaveReminderFragment : BaseFragment() {
         return foregroundLocationApproved && backgroundPermissionApproved
     }
 
-    @TargetApi(29 )
+//    @TargetApi(29 )
     private fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved())
             return
+    Log.i("requestForegroundAndBackgroundLocationPermissions", "requestForegroundAndBackgroundLocationPermissions: required")
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         val resultCode = when {
             runningQOrLater -> {
@@ -127,7 +142,7 @@ class SaveReminderFragment : BaseFragment() {
         ActivityCompat.requestPermissions(
             requireActivity(),
             permissionsArray,
-            resultCode
+            1
         )
     }
 
@@ -189,6 +204,7 @@ class SaveReminderFragment : BaseFragment() {
     private fun addGeofenceForClue(){
 
         if(!this::itemSelected.isInitialized||itemSelected.latitude ==null ||itemSelected.longitude==null){
+            Log.i("addGeofenceForClue", "addGeofenceForClue: return null")
             return
         }
 
@@ -220,19 +236,21 @@ class SaveReminderFragment : BaseFragment() {
             .addGeofence(geofence)
             .build()
 
+        Log.i("addGeofenceForClue", "addGeofenceForClue: built")
         // First, remove any existing geofences that use our pending intent
         geofencingClient.removeGeofences(geofencePendingIntent).run {
             // Regardless of success/failure of the removal, add the new geofence
             addOnCompleteListener {
+                Log.i("addGeofenceForClue", "addGeofenceForClue: removed")
                 // Add the new geofence request with the new geofence
                 if (ActivityCompat.checkSelfPermission(
                         requireActivity(),
                         Manifest.permission.ACCESS_FINE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED
+                    ) == PackageManager.PERMISSION_GRANTED
                 ) {
                     geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                         addOnSuccessListener {
-                            Log.e("Add Geofence", geofence.requestId)
+                            Log.i("Add Geofence", geofence.requestId)
                             _viewModel.validateAndSaveReminder(itemSelected)
                             _viewModel.showToast.value="Geofence added."
                         }
@@ -242,6 +260,8 @@ class SaveReminderFragment : BaseFragment() {
                             }
                         }
                     }
+                }else{
+                    Log.i("addGeofenceForClue", "addGeofenceForClue: missing permission")
                 }
             }
         }
@@ -285,6 +305,23 @@ class SaveReminderFragment : BaseFragment() {
                 }.show()
         } else {
             checkDeviceLocationSettingsAndStartGeofence()
+        }
+    }
+
+    private fun checkNotificationPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                Log.i("PERMISSION", "checkNotificationPermission: granted")
+                return
+            }
+            else -> {
+                // You can directly ask for the permission.
+                // The registered ActivityResultCallback gets the result of this request.
+                ActivityCompat.requestPermissions(requireActivity(), arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
         }
     }
 

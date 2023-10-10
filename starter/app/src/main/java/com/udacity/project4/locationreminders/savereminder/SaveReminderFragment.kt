@@ -79,9 +79,7 @@ class SaveReminderFragment : BaseFragment() {
             val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
 
-            // TODO: use the user entered reminder details to:
-            //  1) add a geofencing request
-            //  2) save the reminder to the local db
+
             itemSelected = ReminderDataItem(title, description, location, latitude, longitude)
             checkPermissionsAndStartGeofencing()
         }
@@ -189,7 +187,7 @@ class SaveReminderFragment : BaseFragment() {
         if (!foregroundAndBackgroundLocationPermissionApproved()) {
             return
         }
-        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
+        geofencingClient.removeGeofences(geofencePendingIntent).run {
             addOnSuccessListener {
                 // Geofences removed
                 Log.i("removeGeofences", "removeGeofences: removed")
@@ -216,7 +214,7 @@ class SaveReminderFragment : BaseFragment() {
             .setCircularRegion(
                 itemSelected.latitude!!,
                 itemSelected.longitude!!,
-                100f
+                2000f
             )
             // Set the expiration duration of the geofence. This geofence gets
             // automatically removed after this period of time.

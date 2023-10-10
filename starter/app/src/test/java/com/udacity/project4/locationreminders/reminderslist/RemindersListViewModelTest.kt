@@ -18,9 +18,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
+@Config(sdk = [29])
 class RemindersListViewModelTest {
     private lateinit var dataSource: FakeDataSource
 
@@ -33,7 +35,7 @@ class RemindersListViewModelTest {
     var mainCoroutineRule = MainCoroutineRule()
 
     @Before
-    fun prepareDate() {
+    fun prepareData() {
         val reminderDataItem = mutableListOf<ReminderDTO>()
         dataSource = FakeDataSource(reminderDataItem)
         remindersListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), dataSource)

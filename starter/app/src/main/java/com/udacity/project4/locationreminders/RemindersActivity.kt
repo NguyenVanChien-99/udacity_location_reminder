@@ -23,12 +23,11 @@ class RemindersActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityRemindersBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        if(AuthUI.getInstance().auth.currentUser==null){
+        if (AuthUI.getInstance().auth.currentUser == null) {
             Log.i("main activity", "onCreate: unauthenticated")
-            //TODO move to login activity
+            val intent = Intent(this, AuthenticationActivity::class.java)
+            startActivity(intent)
         }
-//        val intent = Intent(requireContext(), AuthenticationActivity::class.java)
-//        startActivity(intent)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

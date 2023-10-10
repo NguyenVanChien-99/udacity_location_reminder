@@ -33,5 +33,9 @@ class ReminderDescriptionActivity : AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, layoutId)
         binding.reminderDataItem =
             intent.extras?.getSerializable(EXTRA_ReminderDataItem) as ReminderDataItem
+
+        binding.btnBack.setOnClickListener{
+            startActivity(Intent(this, RemindersActivity::class.java))
+        }
     }
 }

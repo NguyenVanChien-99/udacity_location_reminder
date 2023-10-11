@@ -33,14 +33,15 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
-import org.koin.core.context.GlobalContext
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.local.FakeDataSource
+import org.koin.core.context.GlobalContext
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -48,10 +49,7 @@ import com.udacity.project4.locationreminders.data.local.FakeDataSource
 @MediumTest
 class ReminderListFragmentTest {
 
-    //    TODO: test the navigation of the fragments.
-//    TODO: test the displayed data on the UI.
-//    TODO: add testing for the error messages.
-    private lateinit var repository: FakeDataSource
+    private lateinit var datasource: FakeDataSource
 
     // Executes each task synchronously using Architecture Components.
     @get:Rule
@@ -62,6 +60,7 @@ class ReminderListFragmentTest {
 
     @Before
     fun init() {
+        stopKoin()
         val appModule = module {
             viewModel {
                 RemindersListViewModel(
@@ -69,10 +68,7 @@ class ReminderListFragmentTest {
                     get() as ReminderDataSource
                 )
             }
-            // ReminderDataSource
             single<ReminderDataSource> { get<FakeDataSource>() }
-            // FakeAndroidTestRepository
-//            single<FakeAndroidTestRepository> { FakeAndroidTestRepository() }
             single { LocalDB.createRemindersDao(ApplicationProvider.getApplicationContext()) }
         }
 
@@ -80,9 +76,21 @@ class ReminderListFragmentTest {
             androidContext(ApplicationProvider.getApplicationContext())
             modules(listOf(appModule))
         }
-        repository = GlobalContext.get().get()
+        datasource = GlobalContext.get().get<FakeDataSource>()
         runBlocking {
-            repository.deleteAllReminders()
+            datasource.deleteAllReminders()
         }
     }
+
+    @After
+    fun tearDown() {
+        stopKoin()
+    }
+
+    @Test
+    fun reminderListFragment_DisplayNoReminders() = mainCoroutineRule.runBlockingTest {
+        launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
+        onView(withText(R.string.no_data)).check(matches(isDisplayed()))
+    }
+
 }

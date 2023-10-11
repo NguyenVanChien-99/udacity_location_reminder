@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi;
 import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
@@ -36,8 +37,31 @@ class RemindersDaoTest {
             RemindersDatabase::class.java
         ).build()
     }
+    @Test
+    fun insert() = runTest  {
+        val reminder = ReminderDTO("title", "desc", "loc", 1.0, 1.0)
+        database.reminderDao().saveReminder(reminder)
+        val resp = database.reminderDao().getReminderById(reminder.id)
+        resp?.let {
+            assertThat(resp.id, `is`(reminder.id))
+        }
+    }
 
+    @Test
+    fun getAll() = runTest {
+        val reminder = ReminderDTO("title", "desc", "loc", 1.0, 1.0)
+        database.reminderDao().saveReminder(reminder)
+        val resp = database.reminderDao().getReminders()
+        assertThat(resp.size, `is`(1))
+    }
 
-//    TODO: Add testing implementation to the RemindersDao.kt
+    @Test
+    fun deleteAll() = runTest {
+        val reminder = ReminderDTO("title", "desc", "loc", 1.0, 1.0)
+        database.reminderDao().saveReminder(reminder)
+        database.reminderDao().deleteAllReminders()
+        val resp = database.reminderDao().getReminders()
+        assertThat(resp.size, `is`(0))
+    }
 
 }

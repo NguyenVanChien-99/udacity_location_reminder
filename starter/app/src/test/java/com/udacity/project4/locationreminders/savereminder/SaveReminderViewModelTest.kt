@@ -13,15 +13,19 @@ import com.udacity.project4.locationreminders.reminderslist.RemindersListViewMod
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.pauseDispatcher
 import kotlinx.coroutines.test.resumeDispatcher
+import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
+@Config(sdk = [29])
 class SaveReminderViewModelTest {
     private lateinit var dataSource: FakeDataSource
 
@@ -41,7 +45,6 @@ class SaveReminderViewModelTest {
             SaveReminderViewModel(ApplicationProvider.getApplicationContext(), dataSource)
     }
 
-    //TODO: provide testing to the SaveReminderView and its live data objects
 
     @Test
     fun validateEnteredData() {
@@ -54,13 +57,15 @@ class SaveReminderViewModelTest {
         assertThat(result2, `is`(true))
     }
 
-    fun onClear() {
+    @Test
+    fun onClear() = runTest{
         saveViewModel.reminderTitle.value = "test"
         saveViewModel.onClear()
-        assertThat(saveViewModel.reminderTitle.getOrAwaitValue(), null)
+        assertThat(saveViewModel.reminderTitle.getOrAwaitValue(), nullValue())
     }
 
-    fun save() {
+    @Test
+    fun saveReminder()= runTest{
         mainCoroutineRule.pauseDispatcher()
         val reminder = ReminderDataItem("title", "desc", "loc", 2.0, 2.0)
         saveViewModel.saveReminder(reminder)
@@ -69,7 +74,7 @@ class SaveReminderViewModelTest {
         assertThat(saveViewModel.showLoading.getOrAwaitValue(), `is`(false))
         assertThat(
             saveViewModel.showToast.getOrAwaitValue(),
-            `is`("Geofence added.")
+            `is`("Reminder Saved !")
         )
     }
 

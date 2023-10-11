@@ -1,6 +1,5 @@
 package com.udacity.project4.locationreminders.reminderslist
 
-import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -12,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.pauseDispatcher
 import kotlinx.coroutines.test.resumeDispatcher
 import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.Is.`is`
 import org.junit.Before
@@ -42,32 +42,32 @@ class RemindersListViewModelTest {
     }
 
     @Test
-    fun showData()=mainCoroutineRule.runBlockingTest{
+    fun showData() = runTest{
         dataSource.saveReminder(ReminderDTO("til","desc","loc",1.0,1.0,"1"))
         mainCoroutineRule.pauseDispatcher()
         remindersListViewModel.loadReminders()
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(true))
         mainCoroutineRule.resumeDispatcher()
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(false))
-        assertThat(remindersListViewModel.remindersList.getOrAwaitValue().size, `is`(3))
+        assertThat(remindersListViewModel.remindersList.getOrAwaitValue().size, `is`(1))
         assertThat(remindersListViewModel.showNoData.getOrAwaitValue(), `is`(false))
     }
 
     @Test
-    fun showError()=mainCoroutineRule.runBlockingTest{
+    fun showError()=runTest{
         mainCoroutineRule.pauseDispatcher()
         dataSource.returnError=true
         remindersListViewModel.loadReminders()
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(true))
         mainCoroutineRule.resumeDispatcher()
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(false))
-        assertThat(remindersListViewModel.showErrorMessage.getOrAwaitValue(), `is`(Exception("Get reminder error").toString()))
+        assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(), `is`(Exception("Get reminder error").toString()))
         dataSource.returnError=false
     }
 
 
     @Test
-    fun nodata()=mainCoroutineRule.runBlockingTest{
+    fun nodata()=runTest{
         dataSource.deleteAllReminders()
         mainCoroutineRule.pauseDispatcher()
         remindersListViewModel.loadReminders()

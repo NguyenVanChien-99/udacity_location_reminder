@@ -81,7 +81,9 @@ class SaveReminderFragment : BaseFragment() {
 
 
             itemSelected = ReminderDataItem(title, description, location, latitude, longitude)
-            checkPermissionsAndStartGeofencing()
+            if (_viewModel.validateEnteredData(itemSelected)){
+                checkPermissionsAndStartGeofencing()
+            }
         }
     }
 

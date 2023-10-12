@@ -14,10 +14,12 @@ import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.Is.`is`
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.GlobalContext.stopKoin
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
@@ -41,6 +43,11 @@ class RemindersListViewModelTest {
         remindersListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), dataSource)
     }
 
+    @After
+    fun down() {
+        stopKoin()
+    }
+
     @Test
     fun showData() = runTest{
         dataSource.saveReminder(ReminderDTO("til","desc","loc",1.0,1.0,"1"))
@@ -61,7 +68,7 @@ class RemindersListViewModelTest {
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(true))
         mainCoroutineRule.resumeDispatcher()
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(false))
-        assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(), `is`(Exception("Get reminder error").toString()))
+        assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(), `is`("Get reminder error"))
         dataSource.returnError=false
     }
 

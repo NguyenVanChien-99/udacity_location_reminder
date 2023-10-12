@@ -252,7 +252,7 @@ class SaveReminderFragment : BaseFragment() {
                         addOnSuccessListener {
                             Log.i("Add Geofence", geofence.requestId)
                             _viewModel.validateAndSaveReminder(itemSelected)
-                            _viewModel.showToast.value="Geofence added."
+//                            _viewModel.showToast.value="Geofence added."
                         }
                         addOnFailureListener {
                             if ((it.message != null)) {

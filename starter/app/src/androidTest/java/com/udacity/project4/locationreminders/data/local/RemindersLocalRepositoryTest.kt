@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.core.Is
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -58,6 +59,12 @@ class RemindersLocalRepositoryTest {
         repository.saveReminder(reminder)
         val resp = repository.getReminders() as Result.Success
         assertThat(resp.data.size, `is`(1))
+    }
+
+    @Test
+    fun get_notFound() = runTest {
+        val resp = repository.getReminder("st_not_found") as Result.Error
+        assertThat(resp.message, `is`("Reminder not found!"))
     }
 
     @Test

@@ -21,6 +21,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import com.google.android.material.internal.ContextUtils.getActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
@@ -31,6 +32,8 @@ import com.udacity.project4.locationreminders.reminderslist.RemindersListViewMod
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
+import com.udacity.project4.utils.EspressoIdlingResource
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
@@ -53,36 +56,25 @@ import org.koin.dsl.module
 class RemindersActivityTest {// Extended Koin Test - embed autoclose @after method to close Koin after every test
 
     private lateinit var datasource: ReminderDataSource
-    private lateinit var appContext: Application
+    private lateinit var context: Application
 
     @Before
-    fun prepareData() {
-        stopKoin()//stop the original app koin
-        appContext = getApplicationContext()
+    fun init() {
+        //stop the original app koin
+        stopKoin()
+        context = getApplicationContext()
         val myModule = module {
-            viewModel {
-                RemindersListViewModel(
-                    appContext,
-                    get() as ReminderDataSource
-                )
-            }
-            single {
-                SaveReminderViewModel(
-                    appContext,
-                    get() as ReminderDataSource
-                )
-            }
-            single<ReminderDataSource> { RemindersLocalRepository(get()) }
-            single { LocalDB.createRemindersDao(appContext) }
+            viewModel { RemindersListViewModel(context, get() as ReminderDataSource) }
+            single { SaveReminderViewModel(context, get() as ReminderDataSource) }
+            single { RemindersLocalRepository(get()) as ReminderDataSource }
+            single { LocalDB.createRemindersDao(context) }
         }
-        startKoin {
-            modules(listOf(myModule))
-        }
+        // new koin module
+        startKoin { modules(listOf(myModule)) }
+        //Get our repository
         datasource = get().get()
-
-        runBlocking {
-            datasource.deleteAllReminders()
-        }
+        // delete the data to start fresh
+        runBlocking { datasource.deleteAllReminders() }
     }
 
     @After
@@ -91,22 +83,25 @@ class RemindersActivityTest {// Extended Koin Test - embed autoclose @after meth
     }
     private val dataBindingIdlingResource = DataBindingIdlingResource()
 
+    @After
+    fun unregisterResource() {
+        IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
+        IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
+    }
+
     @Before
-    fun registerDataResource() {
+    fun registerResource() {
+        IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
         IdlingRegistry.getInstance().register(dataBindingIdlingResource)
     }
 
-    @After
-    fun unregisterDataResource() {
-        IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
-    }
+    @ExperimentalCoroutinesApi
     @Test
     fun endToEndTest() {
 
         val expected = ReminderDTO("title", "desc", "loc", 1.0, 1.0)
 
         val scenario = ActivityScenario.launch(RemindersActivity::class.java)
-
         dataBindingIdlingResource.monitorActivity(scenario)
         //Show no data
         onView(withText(R.string.no_data)).check(matches(isDisplayed()))
@@ -128,8 +123,18 @@ class RemindersActivityTest {// Extended Koin Test - embed autoclose @after meth
         Thread.sleep(1000)
         onView(withId(R.id.saveReminder)).perform(click())
 
+        onView(withText(R.string.reminder_saved)).inRoot(withDecorView(not(`is`(getActivity(scenario)?.window?.decorView)))).check(matches(isDisplayed()))
         onView(withText(expected.title)).check(matches(isDisplayed()))
         onView(withText(expected.description)).check(matches(isDisplayed()))
+        scenario.close()
+    }
+
+    private fun getActivity(activityScenario: ActivityScenario<RemindersActivity>): Activity? {
+        var activity: Activity? = null
+        activityScenario.onActivity {
+            activity = it
+        }
+        return activity
     }
 
     @Test

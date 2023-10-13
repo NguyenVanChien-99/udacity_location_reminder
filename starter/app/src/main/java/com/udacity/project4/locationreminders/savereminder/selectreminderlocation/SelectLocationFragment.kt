@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -150,13 +151,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun setMapStyle(map: GoogleMap) {
         try {
             val success = map.setMapStyle(
-                MapStyleOptions.loadRawResourceStyle(requireActivity(), R.raw.firebase_common_keep)
+                MapStyleOptions.loadRawResourceStyle(requireActivity(), R.raw.map_style)
             )
             if (!success) {
                 Log.i("setMapStyle", "setMapStyle: failed")
             }
         } catch (ex: Exception) {
             Log.i("setMapStyle", "setMapStyle: error ${ex}")
+        }
+    }
+
+    private val requestPermissionLauncher =registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        isGranted : Boolean->
+        if (isGranted){
+            checkUserPermission()
+        }else{
+            _viewModel.showToast.value= getString(R.string.permission_denied_explanation)
         }
     }
 
@@ -187,13 +197,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             else -> {
                 // You can directly ask for the permission.
                 // The registered ActivityResultCallback gets the result of this request.
-                activity?.let {
-                    ActivityCompat.requestPermissions(
-                        it,
-                        arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
-                        1
-                    )
-                }
+                requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
     }

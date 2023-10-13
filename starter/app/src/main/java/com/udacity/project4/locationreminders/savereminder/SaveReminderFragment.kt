@@ -7,12 +7,14 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -126,7 +128,8 @@ class SaveReminderFragment : BaseFragment() {
         return foregroundLocationApproved && backgroundPermissionApproved
     }
 
-//    @TargetApi(29 )
+    @TargetApi(29 )
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved())
             return
@@ -139,11 +142,7 @@ class SaveReminderFragment : BaseFragment() {
             }
             else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
-        ActivityCompat.requestPermissions(
-            requireActivity(),
-            permissionsArray,
-            1
-        )
+        requestPermissions(permissionsArray,resultCode)
     }
 
 
@@ -164,8 +163,9 @@ class SaveReminderFragment : BaseFragment() {
                 try {
                     // Show the dialog by calling startResolutionForResult(),
                     // and check the result in onActivityResult().
-                    exception.startResolutionForResult(requireActivity(),
-                        REQUEST_TURN_DEVICE_LOCATION_ON)
+//                    exception.startResolutionForResult(requireActivity(),
+//                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                    startIntentSenderForResult(exception.resolution.intentSender,REQUEST_TURN_DEVICE_LOCATION_ON,null,0,0,0,null)
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d("checkDeviceLocationSettingsAndStartGeofence", "Error geting location settings resolution: " + sendEx.message)
                 }

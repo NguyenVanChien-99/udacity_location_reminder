@@ -97,7 +97,7 @@ class SaveReminderFragment : BaseFragment() {
 //        removeGeofences()
     }
 
-//    @TargetApi(29)
+    @TargetApi(29)
     private fun checkPermissionsAndStartGeofencing() {
         if (foregroundAndBackgroundLocationPermissionApproved()) {
             Log.i("TAG", "checkPermissionsAndStartGeofencing: ok")
@@ -108,7 +108,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-//    @TargetApi(29)
+    @TargetApi(29)
     private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
         val foregroundLocationApproved = (
                 PackageManager.PERMISSION_GRANTED ==

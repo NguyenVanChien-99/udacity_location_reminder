@@ -1,5 +1,6 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -11,8 +12,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -21,6 +25,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PointOfInterest
+import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -176,6 +181,37 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 requireContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) -> {
+                val locationRequest = LocationRequest.create().apply {
+                    priority = LocationRequest.PRIORITY_LOW_POWER
+                }
+                val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+                val settingsClient = LocationServices.getSettingsClient(requireActivity())
+                val locationSettingsResponseTask =
+                    settingsClient.checkLocationSettings(builder.build())
+
+                locationSettingsResponseTask.addOnFailureListener { exception ->
+                    if (exception is ResolvableApiException){
+                        // Location settings are not satisfied, but this can be fixed
+                        // by showing the user a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+//                    exception.startResolutionForResult(requireActivity(),
+//                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                            startIntentSenderForResult(exception.resolution.intentSender,
+                                29,null,0,0,0,null)
+                        } catch (sendEx: IntentSender.SendIntentException) {
+                            Log.d("checkDeviceLocationSettingsAndStartGeofence", "Error geting location settings resolution: " + sendEx.message)
+                        }
+                    } else {
+                        Snackbar.make(
+                            requireView(),
+                            R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                        ).setAction(android.R.string.ok) {
+//                            checkDeviceLocationSettingsAndStartGeofence()
+                        }.show()
+                    }
+                }
                 Log.i("PERMISSION", "checkNotificationPermission: granted")
                 map.isMyLocationEnabled = true
                 //move our screen to my location
